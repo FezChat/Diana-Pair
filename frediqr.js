@@ -52,29 +52,29 @@ router.get('/', async (req, res) => {
 				} = s;
 				if (qr) await res.end(await QRCode.toBuffer(qr));
 				if (connection == "open") {
-					await delay(50000);
+					await delay(5000);
 					let data = fs.readFileSync(__dirname + `/temp/${id}/creds.json`);
-					await delay(8000);
+					await delay(800);
 				   let b64data = Buffer.from(data).toString('base64');
 				   let session = await Qr_Code_By_Fredi_Ezra.sendMessage(Qr_Code_By_Fredi_Ezra.user.id, { text: '' + b64data });
 	
 				   let LUCKY_MD_XFORCE_TEXT = `
-*❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒*
-*_Pair Code Connected by Queen Diana Xmd*
-*______________________________________*
-*╔════◇*
-*║* *『 THANKS 👍 FOR  SHOWING LOVE』*
-*║* _You Have Completed the First Step to Deploy a Whatsapp Bot._
-*╚════════════════════════╝*
-*╔═════◇*
-*║*  『••• 𝗩𝗶𝘀𝗶𝘁 𝗙𝗼𝗿 𝗛𝗲𝗹𝗽 •••』
-*║❒* *Owner:* _https://wa.me/18492823944_
-*║❒* *Repo:* _https://github.com/QUEEN-DIANA/DIANA-XMD_
-*║❒* *WaChannel:* _https://whatsapp.com/channel/0029VbA8bWXKmCPZ2EFhAA0Y_
-*║❒* 
-*╚════════════════════════╝*
+❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒
+*_Pair Code Connected by LEONARD MD*
+______________________________________
+╔════◇
+║ *『 THANKS 👍 FOR  SHOWING LOVE』*
+║ _You Have Completed the First Step to Deploy a Whatsapp Bot._
+╚════════════════════════╝
+╔═════◇
+║  『••• 𝗩𝗶𝘀𝗶𝘁 𝗙𝗼𝗿 𝗛𝗲𝗹𝗽 •••』
+║❒ *Owner:* _https://wa.me/255757103671_
+║❒ *Repo:* _https://github.com/leonard1tech/LEONARD-MD_
+║❒ *WaChannel:* _https://whatsapp.com/channel/0029VbAjawl9MF8vQQa0ZT32 _
+║❒ 
+╚════════════════════════╝
 _____________________________________
-*❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒*
+❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒
 `;
 	 await Qr_Code_By_Fredi_Ezra.sendMessage(Qr_Code_By_Fredi_Ezra.user.id,{text:LUCKY_MD_XFORCE_TEXT},{quoted:session})
 
