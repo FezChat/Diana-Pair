@@ -1,97 +1,101 @@
-const PastebinAPI = require('pastebin-js');
-const pastebin = new PastebinAPI('EMWTMkQAVfJa9kM-MRUrxd5Oku1U7pgL');
-const { makeid } = require('./id');
-const express = require('express');
-const fs = require('fs');
-let router = express.Router();
-const pino = require('pino');
-const {
-    default: makeWASocket,
-    useMultiFileAuthState,
-    makeCacheableSignalKeyStore,
-    Browsers,
-    delay
-} = require('@whiskeysocket/baileys');
+import express from 'express';
+import chalk from 'chalk';
+import { getOrCreateSession, pairCodeRequests } from './session-manager.js';
 
-function removeFile(FilePath) {
-    if (!fs.existsSync(FilePath)) return false;
-    fs.rmSync(FilePath, { recursive: true, force: true });
-}
+const router = express.Router();
 
-router.get('/', async (req, res) => {
-    const id = makeid();
-    let num = req.query.number;
-
-    async function LUCKY_MD_XFORCE_PAIR_CODE() {
-        const { state, saveCreds } = await useMultiFileAuthState('./temp/' + id);
-        try {
-            let Pair_Code_By_Fredi_Ezra = makeWASocket({
-                auth: {
-                    creds: state.creds,
-                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' }).child({ level: 'fatal' })),
-                },
-                printQRInTerminal: false,
-                logger: pino({ level: 'fatal' }).child({ level: 'fatal' }),
-                browser: Browsers.macOS('Chrome')
-            });
-
-            if (!Pair_Code_By_Fredi_Ezra.authState.creds.registered) {
-                await delay(1500);
-                num = num.replace(/[^0-9]/g, '');
-                const code = await Pair_Code_By_Fredi_Ezra.requestPairingCode(num);
-                if (!res.headersSent) {
-                    await res.send({ code });
-                }
-            }
-
-            Pair_Code_By_Fredi_Ezra.ev.on('creds.update', saveCreds);
-            Pair_Code_By_Fredi_Ezra.ev.on('connection.update', async (s) => {
-                const { connection, lastDisconnect } = s;
-                if (connection === 'open') {
-                    await delay(5000);
-                    let data = fs.readFileSync(__dirname + `/temp/${id}/creds.json`);
-                    await delay(800);
-                    let b64data = Buffer.from(data).toString('base64');
-                    let session = await Pair_Code_By_Fredi_Ezra.sendMessage(Pair_Code_By_Fredi_Ezra.user.id, { text: '' + b64data });
-
-                    let LUCKY_MD_XFORCE_TEXT = `
-❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒
-*_Pair Code Connected by LEONARD MD*
-______________________________________
-╔════◇
-║ *『 THANKS 👍 FOR  SHOWING LOVE』*
-║ _You Have Completed the First Step to Deploy a Whatsapp Bot._
-╚════════════════════════╝
-╔═════◇
-║  『••• 𝗩𝗶𝘀𝗶𝘁 𝗙𝗼𝗿 𝗛𝗲𝗹𝗽 •••』
-║❒ *Owner:* _https://wa.me/255757103671_
-║❒ *Repo:* _https://github.com/leonard1tech/LEONARD-MD_
-║❒ *WaChannel:* _https://whatsapp.com/channel/0029VbAjawl9MF8vQQa0ZT32 _
-║❒ 
-╚════════════════════════╝
-_____________________________________
-❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒❒
-`;
-                    await Pair_Code_By_Fredi_Ezra.sendMessage(Pair_Code_By_Fredi_Ezra.user.id, { text: LUCKY_MD_XFORCE_TEXT }, { quoted: session });
-
-                    await delay(100);
-                    await Pair_Code_By_Fredi_Ezra.ws.close();
-                    return await removeFile('./temp/' + id);
-                } else if (connection === 'close' && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode != 401) {
-                    await delay(10000);
-                    LUCKY_MD_XFORCE_PAIR_CODE();
-                }
-            });
-        } catch (err) {
-            console.log('service restated');
-            await removeFile('./temp/' + id);
-            if (!res.headersSent) {
-                await res.send({ code: 'Service Unavailable' });
-            }
-        }
-    }
-
-    return await LUCKY_MD_XFORCE_PAIR_CODE();
+// Pair code page
+router.get('/page', (req, res) => {
+    res.sendFile(join(__dirname, 'Public', 'paircode.html'));
 });
 
-module.exports = router;
+// Generate Pair Code
+router.post('/generate', async (req, res) => {
+    try {
+        const { number, sessionId = null } = req.body;
+        
+        if (!number || !number.match(/^\d{10,15}$/)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid phone number format. Use format: 255752593977'
+            });
+        }
+
+        console.log(chalk.blue(`🔗 Pair code request for number: ${number}`));
+        const session = await getOrCreateSession(sessionId);
+        const status = session.getStatus();
+
+        if (status.status === 'connected') {
+            return res.json({
+                success: true,
+                status: 'connected',
+                sessionId: session.sessionId,
+                message: 'WhatsApp is already connected'
+            });
+        }
+
+        const code = await session.requestPairCode(number);
+        
+        res.json({
+            success: true,
+            code,
+            sessionId: session.sessionId,
+            expiresIn: '10 minutes'
+        });
+    } catch (error) {
+        console.error(chalk.red('Pair code generation error:'), error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Verify pair code
+router.post('/verify', (req, res) => {
+    try {
+        const { code } = req.body;
+        
+        if (!code) {
+            return res.status(400).json({
+                success: false,
+                error: 'Code is required'
+            });
+        }
+        
+        const cleanCode = code.replace(/-/g, '');
+        const pairData = pairCodeRequests.get(cleanCode);
+        
+        if (!pairData) {
+            return res.json({
+                success: false,
+                error: 'Invalid or expired pair code'
+            });
+        }
+        
+        const now = Date.now();
+        if (now > pairData.expiresAt) {
+            pairCodeRequests.delete(cleanCode);
+            return res.json({
+                success: false,
+                error: 'Pair code has expired'
+            });
+        }
+        
+        res.json({
+            success: true,
+            sessionId: pairData.sessionId,
+            phoneNumber: pairData.phoneNumber,
+            expiresIn: Math.round((pairData.expiresAt - now) / 60000) + ' minutes'
+        });
+        
+    } catch (error) {
+        console.error(chalk.red('Pair code verification error:'), error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+export default router;
