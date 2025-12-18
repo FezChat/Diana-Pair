@@ -8,13 +8,12 @@ const fs = require('fs');
 let router = express.Router()
 const pino = require("pino");
 const {
-	default: Fredi_Ezra,
-	useMultiFileAuthState,
-	jidNormalizedUser,
-	Browsers,
-	delay,
-	makeInMemoryStore, 
-} = require("@whiskeysocket/baileys");
+    default: makeWASocket,
+    useMultiFileAuthState,
+    makeCacheableSignalKeyStore,
+    Browsers,
+    delay
+} = require('@whiskeysocket/baileys');
 
 function removeFile(FilePath) {
 	if (!fs.existsSync(FilePath)) return false;
