@@ -6,11 +6,11 @@ const fs = require('fs');
 let router = express.Router();
 const pino = require('pino');
 const {
-    default: Fredi_Ezra,
+    default: makeWASocket,
     useMultiFileAuthState,
-    delay,
     makeCacheableSignalKeyStore,
-    Browsers
+    Browsers,
+    delay
 } = require('@whiskeysocket/baileys');
 
 function removeFile(FilePath) {
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
     async function LUCKY_MD_XFORCE_PAIR_CODE() {
         const { state, saveCreds } = await useMultiFileAuthState('./temp/' + id);
         try {
-            let Pair_Code_By_Fredi_Ezra = Fredi_Ezra({
+            let Pair_Code_By_Fredi_Ezra = makeWASocket({
                 auth: {
                     creds: state.creds,
                     keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' }).child({ level: 'fatal' })),
