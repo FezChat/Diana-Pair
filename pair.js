@@ -11,7 +11,7 @@ const {
     delay,
     makeCacheableSignalKeyStore,
     Browsers
-} = require('@fredi/baileys');
+} = require('@whiskeysocket/baileys');
 
 function removeFile(FilePath) {
     if (!fs.existsSync(FilePath)) return false;
