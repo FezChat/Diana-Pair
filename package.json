@@ -1,25 +1,26 @@
 {
-    "description": "frediezra",
-    "main": "./fredi.js",
-  "engines" : { 
-    "npm" : ">=9.7.2",
-    "node" : ">=20.0.0"
-    },
-    "scripts": {
+  "name": "frediezra",
+  "description": "frediezra",
+  "main": "fredi.js",
+  "type": "commonjs",
+  "engines": {
+    "node": "20.x",
+    "npm": ">=9.7.2"
+  },
+  "scripts": {
     "start": "node fredi.js"
   },
   "author": "FrediTech",
-  "license": "GPL-3.0 license",
+  "license": "GPL-3.0-only",
   "dependencies": {
-    "@whiskeysocket/baileys":"latest",
-    "maher-zubair-baileys": "^6.6.5",
-    "qrcode": "^1.5.3",
-    "awesome-phonenumber": "^2.64.0",
-    "pino": "^8.1.0",
-    "phone" : "3.1.30",
-    "body-parser": "^1.20.1",
+    "@whiskeysocket/baileys": "^6.7.9",
+    "express": "^4.18.2",
     "pastebin-js": "^1.0.6",
-    "express": "^4.18.1",
-    "path": "^0.12.7"
-   }
+    "pino": "^8.17.0",
+    "awesome-phonenumber": "^2.64.0",
+    "qrcode": "^1.5.4",
+    "body-parser": "^1.20.2",
+    "path": "^0.12.7",
+    "phone": "3.1.30"
+  }
 }
