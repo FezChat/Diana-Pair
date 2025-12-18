@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsApp QR Pairing | Fee Xmd</title>
+    <!-- Load Poppins and QR Code library -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        background: #000;
+        color: #00ff99;
+        font-family: 'Poppins', sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        position: relative;
+      }
+      
+      /* Header Styles */
+      .header {
+        padding: 20px 5%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 10;
+        border-bottom: 1px solid rgba(0, 255, 153, 0.1);
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(10px);
+      }
+      
+      .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      
+      .profile-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #00ff00;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        transition: transform 0.3s ease;
+      }
+      
+      .profile-img:hover {
+        transform: scale(1.05);
+      }
+      
+      .logo-text h1 {
+        font-size: 1.8rem;
+        background: linear-gradient(to right, #00ff99, #00cc7a);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      
+      .logo-text p {
+        color: #b0b0b0;
+        font-size: 0.9rem;
+        font-weight: 300;
+      }
+      
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+      }
+      
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      
+      .online {
+        background-color: #00ff00;
+        box-shadow: 0 0 10px #00ff00;
+        animation: pulse 2s infinite;
+      }
+      
+      .offline {
+        background-color: #ff4444;
+        box-shadow: 0 0 10px #ff4444;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding: 30px 20px;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 15px;
+        text-align: center;
+        text-shadow: 0 0 15px #00ff88;
+      }
+      
+      h2 {
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+        opacity: 0.9;
+        text-align: center;
+        color: #b0b0b0;
+      }
+
+      /* Session Input */
+      #session-input-container {
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 400px;
+      }
+      
+      #session-input-container label {
+        font-size: 1rem;
+        margin-bottom: 8px;
+        color: #00ff99;
+      }
+      
+      #session-id {
+        padding: 12px 15px;
+        border: 2px solid #00ff00;
+        border-radius: 8px;
+        background: rgba(0, 20, 0, 0.5);
+        color: #00ff00;
+        font-size: 1rem;
+        width: 100%;
+        margin-top: 10px;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+      
+      #session-id:focus {
+        outline: none;
+        box-shadow: 0 0 15px #00ff00;
+        border-color: #00ff99;
+      }
+
+      /* QR Container */
+      #qr-container {
+        margin: 20px 0;
+        background: rgba(0, 255, 0, 0.08);
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 0 25px rgba(0, 255, 0, 0.25);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        min-width: 280px;
+        min-height: 280px;
+        width: 100%;
+        max-width: 320px;
+        border: 1px solid rgba(0, 255, 0, 0.3);
+        backdrop-filter: blur(10px);
+      }
+
+      /* Wrapper for the canvas to ensure proper fit */
+      #qr-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        max-width: 280px;
+        aspect-ratio: 1 / 1;
+      }
+
+      /* Style for the QR code canvas */
+      #qrCanvas {
+        border-radius: 10px;
+        border: 2px solid #00ff00;
+        width: 100%;
+        height: auto;
+        max-width: 280px;
+      }
+
+      #loader {
+        border: 4px solid rgba(0, 255, 0, 0.2);
+        border-top: 4px solid #00ff00;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .btn {
+        margin-top: 10px;
+        padding: 12px 25px;
+        border: 2px solid #00ff00;
+        border-radius: 8px;
+        background: transparent;
+        color: #00ff00;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s ease;
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+        font-size: 1rem;
+        width: 100%;
+        max-width: 300px;
+      }
+      
+      .btn:hover:not(:disabled) {
+        background: #00ff00;
+        color: #000;
+        box-shadow: 0 0 25px #00ff00;
+      }
+      
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .back-btn {
+        padding: 10px 20px;
+        border: 1px solid #00ff00;
+        border-radius: 8px;
+        color: #00ff00;
+        text-decoration: none;
+        transition: 0.3s;
+        font-size: 0.9rem;
+        margin-top: 20px;
+        text-align: center;
+        background: rgba(0, 255, 0, 0.1);
+      }
+      
+      .back-btn:hover {
+        background: #00ff00;
+        color: #000;
+        box-shadow: 0 0 15px #00ff00;
+      }
+
+      canvas#background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+      }
+
+      .status-info {
+        margin-top: 15px;
+        font-size: 0.9rem;
+        opacity: 0.8;
+        text-align: center;
+        width: 100%;
+        max-width: 400px;
+        color: #b0b0b0;
+      }
+
+      .connected-status {
+        color: #00ff88;
+        font-weight: bold;
+        margin-top: 10px;
+        text-align: center;
+        padding: 15px;
+        border: 1px solid #00ff00;
+        border-radius: 8px;
+        background: rgba(0, 255, 0, 0.1);
+        width: 100%;
+      }
+
+      /* Footer Styles */
+      .footer {
+        background: rgba(5, 5, 5, 0.95);
+        border-top: 1px solid rgba(0, 255, 153, 0.1);
+        padding: 25px 5%;
+        margin-top: 30px;
+      }
+      
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      
+      .social-icon {
+        position: relative;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #00ff99;
+        background: rgba(0, 255, 153, 0.1);
+        border: 1px solid rgba(0, 255, 153, 0.3);
+        cursor: pointer;
+        transition: all 0.4s ease;
+        overflow: hidden;
+      }
+      
+      .social-icon::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #00ff99, #00cc7a);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
+      }
+      
+      .social-icon:hover {
+        transform: translateY(-5px);
+        color: #000;
+        box-shadow: 0 10px 20px rgba(0, 255, 153, 0.4);
+      }
+      
+      .social-icon:hover::before {
+        opacity: 1;
+      }
+      
+      .social-icon i {
+        transition: all 0.4s ease;
+      }
+      
+      .social-icon .fa-github {
+        opacity: 1;
+      }
+      
+      .social-icon .fa-user {
+        position: absolute;
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      
+      .social-icon:hover .fa-github {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      
+      .social-icon:hover .fa-user {
+        opacity: 1;
+        transform: scale(1);
+      }
+      
+      .footer-text {
+        text-align: center;
+        color: #b0b0b0;
+        font-size: 0.9rem;
+      }
+      
+      .footer-text p {
+        margin-bottom: 8px;
+      }
+      
+      .developer {
+        color: #00ff99;
+        font-weight: 600;
+      }
+      
+      .year {
+        color: #00aaff;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .header {
+          flex-direction: column;
+          gap: 15px;
+          text-align: center;
+          padding: 15px 5%;
+        }
+        
+        .main-content {
+          padding: 20px 15px;
+        }
+        
+        h1 {
+          font-size: 1.6rem;
+        }
+        
+        h2 {
+          font-size: 1rem;
+        }
+        
+        #qr-container {
+          max-width: 280px;
+          padding: 20px;
+        }
+        
+        #qr-wrapper {
+          max-width: 220px;
+        }
+        
+        .social-links {
+          gap: 15px;
+        }
+        
+        .social-icon {
+          width: 45px;
+          height: 45px;
+          font-size: 1.3rem;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .main-content {
+          padding: 15px 10px;
+        }
+        
+        h1 {
+          font-size: 1.4rem;
+          margin-bottom: 10px;
+        }
+        
+        h2 {
+          font-size: 0.9rem;
+          margin-bottom: 20px;
+        }
+        
+        #qr-container {
+          max-width: 250px;
+          padding: 15px;
+          min-height: 250px;
+        }
+        
+        #qr-wrapper {
+          max-width: 200px;
+        }
+        
+        .btn {
+          padding: 10px;
+          font-size: 0.9rem;
+          max-width: 250px;
+        }
+        
+        .back-btn {
+          padding: 8px 15px;
+          font-size: 0.85rem;
+        }
+      }
+
+      @media (max-width: 380px) {
+        h1 {
+          font-size: 1.2rem;
+        }
+        
+        #qr-container {
+          max-width: 220px;
+        }
+        
+        .social-icon {
+          width: 40px;
+          height: 40px;
+          font-size: 1.2rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Background Canvas -->
+    <canvas id="background"></canvas>
+    
+    <!-- Header with Profile -->
+    <header class="header">
+      <div class="logo-container">
+        <img src="https://files.catbox.moe/uw4l17.jpeg" alt="Fee Xmd" class="profile-img" id="profileImage">
+        <div class="logo-text">
+          <h1>Fee Xmd</h1>
+          <p>QR Pairing Space</p>
+        </div>
+      </div>
+      
+      <div class="status-indicator">
+        <span class="status-dot offline" id="globalStatusDot"></span>
+        <span id="globalStatusText">Loading...</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <h1>WhatsApp QR Pairing</h1>
+      <h2>Silent Wolf Dashboard</h2>
+
+      <div id="session-input-container">
+        <label for="session-id">Enter Session Name:</label>
+        <input type="text" id="session-id" value="default" placeholder="e.g., whatsapp-bot-2" />
+      </div>
+
+      <div id="qr-container">
+        <p style="opacity: 0.7; margin-bottom: 10px;">Click below to generate QR</p>
+      </div>
+
+      <div id="status-info" class="status-info"></div>
+
+      <button class="btn" onclick="generateQR()">⚡ Generate QR Code</button>
+      <a href="/" class="back-btn">⬅ Back to Home</a>
+    </main>
+
+    <!-- Footer with Social Links -->
+    <footer class="footer">
+      <div class="social-links">
+        <a href="https://github.com/Fred1e" target="_blank" class="social-icon" title="Fred1e GitHub">
+          <i class="fab fa-github"></i>
+          <i class="fas fa-user"></i>
+        </a>
+        <a href="https://github.com/FezChat" target="_blank" class="social-icon" title="FezChat GitHub">
+          <i class="fab fa-github"></i>
+          <i class="fas fa-user"></i>
+        </a>
+        <a href="https://github.com/mr-X-force" target="_blank" class="social-icon" title="mr-X-force GitHub">
+          <i class="fab fa-github"></i>
+          <i class="fas fa-user"></i>
+        </a>
+      </div>
+      
+      <div class="footer-text">
+        <p>© <span class="year" id="currentYear">2025</span> WhatsApp QR Pairing Dashboard</p>
+        <p>Developed by <span class="developer">Fee Xmd</span> | All rights reserved</p>
+      </div>
+    </footer>
+
+    <script>
+      // Set current year in footer
+      document.getElementById('currentYear').textContent = new Date().getFullYear();
+      
+      // Profile image lazy loading effect
+      const profileImage = document.getElementById('profileImage');
+      profileImage.style.opacity = '0';
+      profileImage.style.transform = 'scale(0.8)';
+      
+      window.addEventListener('load', function() {
+        setTimeout(() => {
+          profileImage.style.transition = 'opacity 1s ease, transform 1s ease';
+          profileImage.style.opacity = '1';
+          profileImage.style.transform = 'scale(1)';
+        }, 300);
+      });
+      
+      // 🎇 Background animation
+      const canvas = document.getElementById('background');
+      const ctx = canvas.getContext('2d');
+      
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      
+      window.addEventListener('resize', resize);
+      resize();
+
+      const particles = Array.from({ length: 80 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 2 + 1,
+        dx: (Math.random() - 0.5) * 0.8,
+        dy: (Math.random() - 0.5) * 0.8,
+      }));
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00ff00';
+        particles.forEach((p) => {
+          p.x += p.dx;
+          p.y += p.dy;
+          if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+          if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        requestAnimationFrame(animate);
+      }
+      
+      animate();
+
+      // Variables for QR functionality
+      let pollInterval = null;
+      const API_URL = 'http://localhost:5000';
+      const container = document.getElementById('qr-container');
+      const statusInfo = document.getElementById('status-info');
+      const button = document.querySelector('.btn');
+      const sessionIdInput = document.getElementById('session-id');
+      const globalStatusDot = document.getElementById('globalStatusDot');
+      const globalStatusText = document.getElementById('globalStatusText');
+
+      // Update global status
+      function updateGlobalStatus(status, text) {
+        if (status === 'online') {
+          globalStatusDot.className = 'status-dot online';
+          globalStatusText.textContent = text || 'Bot Online';
+        } else if (status === 'offline') {
+          globalStatusDot.className = 'status-dot offline';
+          globalStatusText.textContent = text || 'Bot Offline';
+        } else if (status === 'pairing') {
+          globalStatusDot.className = 'status-dot online';
+          globalStatusText.textContent = text || 'Pairing...';
+        }
+      }
+
+      function stopPolling() {
+        if (pollInterval) clearInterval(pollInterval);
+      }
+
+      function drawQR(qrString) {
+        container.innerHTML = '<div id="qr-wrapper"><canvas id="qrCanvas"></canvas></div>';
+        const canvasElement = document.getElementById('qrCanvas');
+
+        const wrapperWidth = document.getElementById('qr-wrapper').offsetWidth;
+        const qrSize = Math.min(wrapperWidth, 280);
+
+        QRCode.toCanvas(
+          canvasElement,
+          qrString,
+          {
+            width: qrSize,
+            margin: 2,
+            color: { dark: '#00ff00', light: '#000000' },
+          },
+          (error) => {
+            if (error) console.error('QR Draw Error:', error);
+          }
+        );
+      }
+
+      async function fetchStatus(sessionId) {
+        try {
+          const response = await fetch(`${API_URL}/status/${sessionId}`);
+          if (!response.ok) throw new Error(`Server error ${response.status}`);
+          const data = await response.json();
+
+          if (data.status === 'connected') {
+            stopPolling();
+            container.innerHTML = `<div class="connected-status">✅ WhatsApp session <b>${sessionId}</b> is connected!</div>`;
+            statusInfo.textContent = `Session ${sessionId} is active.`;
+            button.textContent = '⚡ Generate QR Code';
+            button.disabled = false;
+            
+            // Update global status
+            updateGlobalStatus('online', `Connected: ${sessionId}`);
+            
+          } else if (data.status === 'qr' && data.qr) {
+            drawQR(data.qr);
+            statusInfo.textContent = `✅ QR generated for ${sessionId}. Scan it via WhatsApp → Linked Devices.`;
+            button.textContent = '🔄 Polling...';
+            button.disabled = true;
+            
+            // Update global status
+            updateGlobalStatus('pairing', `QR Generated: ${sessionId}`);
+            
+          } else if (['paircode', 'initializing', 'connecting'].includes(data.status)) {
+            container.innerHTML = '<div id="loader"></div>';
+            statusInfo.textContent = `🔄 Waiting... (${data.status})`;
+            
+            // Update global status
+            updateGlobalStatus('pairing', `${data.status}...`);
+            
+          } else {
+            stopPolling();
+            container.innerHTML = `<p style="color:red;">❌ Session closed. Click Generate QR to restart.</p>`;
+            statusInfo.textContent = `Session ${sessionId} inactive.`;
+            button.textContent = '⚡ Generate QR Code';
+            button.disabled = false;
+            
+            // Update global status
+            updateGlobalStatus('offline', 'Session Inactive');
+          }
+        } catch (error) {
+          stopPolling();
+          container.innerHTML = '<p style="color:red;">❌ Error connecting to server.</p>';
+          statusInfo.textContent = 'Ensure backend is running on port 5000.';
+          button.textContent = '⚡ Generate QR Code';
+          button.disabled = false;
+          
+          // Update global status
+          updateGlobalStatus('offline', 'Server Error');
+        }
+      }
+
+      async function generateQR() {
+        const sessionId = sessionIdInput.value.trim() || 'default';
+        stopPolling();
+        container.innerHTML = '<div id="loader"></div>';
+        statusInfo.textContent = `Initializing ${sessionId}...`;
+        button.textContent = '⏳ Initializing...';
+        button.disabled = true;
+        
+        // Update global status
+        updateGlobalStatus('pairing', `Initializing: ${sessionId}`);
+
+        try {
+          const response = await fetch(`${API_URL}/generate-qr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId }),
+          });
+          const data = await response.json();
+          if (data.status === 'connected') fetchStatus(sessionId);
+          else {
+            pollInterval = setInterval(() => fetchStatus(sessionId), 5000);
+            fetchStatus(sessionId);
+          }
+        } catch {
+          container.innerHTML = '<p style="color:red;">❌ Failed to contact server API.</p>';
+          statusInfo.textContent = 'Verify server on localhost:5000.';
+          button.textContent = '⚡ Generate QR Code';
+          button.disabled = false;
+          
+          // Update global status
+          updateGlobalStatus('offline', 'Server Unreachable');
+        }
+      }
+
+      // Initialize on page load
+      window.addEventListener('load', async () => {
+        const sessionId = sessionIdInput.value.trim() || 'default';
+        
+        // Animate profile image load
+        setTimeout(() => {
+          profileImage.style.transition = 'opacity 1s ease, transform 1s ease';
+          profileImage.style.opacity = '1';
+          profileImage.style.transform = 'scale(1)';
+        }, 300);
+        
+        try {
+          const res = await fetch(`${API_URL}/status/${sessionId}`);
+          const data = await res.json();
+          if (data.status === 'connected') {
+            container.innerHTML = `<div class="connected-status">✅ WhatsApp session <b>${sessionId}</b> is already connected!</div>`;
+            statusInfo.textContent = `Session ${sessionId} active.`;
+            updateGlobalStatus('online', `Connected: ${sessionId}`);
+          } else {
+            statusInfo.textContent = `Session ${sessionId} idle. Click Generate QR to begin.`;
+            updateGlobalStatus('offline', 'Ready to Connect');
+          }
+        } catch {
+          statusInfo.textContent = `Server not reachable. Check backend.`;
+          updateGlobalStatus('offline', 'Server Offline');
+        }
+      });
+
+      // Handle window resize for better responsiveness
+      window.addEventListener('resize', () => {
+        // Force reflow to ensure proper rendering
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // Trigger reflow
+        document.body.style.display = 'flex';
+      });
+    </script>
+  </body>
+</html>
