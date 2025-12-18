@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
 			saveCreds
 		} = await useMultiFileAuthState('./temp/' + id)
 		try {
-			let Qr_Code_By_Fredi_Ezra = Fredi_Ezra({
+			let Qr_Code_By_Fredi_Ezra = makeWASocket({
 				auth: state,
 				printQRInTerminal: false,
 				logger: pino({
